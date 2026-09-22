@@ -1,5 +1,11 @@
 import type { TripitHttpClient } from "../http/client.js";
-import { type ListTripsOptions, getProfileRaw, getTripRaw, listProAlertsRaw, listTripsRaw } from "../tripit/endpoints.js";
+import {
+  getProfileRaw,
+  getTripRaw,
+  type ListTripsOptions,
+  listProAlertsRaw,
+  listTripsRaw,
+} from "../tripit/endpoints.js";
 import {
   asArray,
   normalizeActivity,
@@ -10,7 +16,7 @@ import {
   normalizeProfile,
   normalizeTripSummary,
 } from "../tripit/normalize.js";
-import type { Profile, ProAlert, TripDetail, TripSummary } from "../tripit/types.js";
+import type { ProAlert, Profile, TripDetail, TripSummary } from "../tripit/types.js";
 
 function byStart(a?: string, b?: string): number {
   const ta = a ? Date.parse(a) : Number.POSITIVE_INFINITY;

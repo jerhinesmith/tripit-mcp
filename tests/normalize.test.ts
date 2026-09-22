@@ -52,7 +52,9 @@ describe("primitive helpers", () => {
   });
 
   it("normalizeAddress converts lat/long strings to numbers", () => {
-    expect(normalizeAddress({ city: "Barcelona", latitude: "41.38879", longitude: "2.15899" })).toEqual({
+    expect(
+      normalizeAddress({ city: "Barcelona", latitude: "41.38879", longitude: "2.15899" }),
+    ).toEqual({
       address: undefined,
       city: "Barcelona",
       state: undefined,

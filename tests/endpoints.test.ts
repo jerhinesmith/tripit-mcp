@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { getProfileRaw, getTripRaw, listProAlertsRaw, listTripsRaw } from "../src/tripit/endpoints.js";
+import {
+  getProfileRaw,
+  getTripRaw,
+  listProAlertsRaw,
+  listTripsRaw,
+} from "../src/tripit/endpoints.js";
 
 function fakeHttp(response: unknown) {
   return { getJson: vi.fn(async () => response) } as any;

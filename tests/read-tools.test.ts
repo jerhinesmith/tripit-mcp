@@ -15,7 +15,13 @@ function fakeServer() {
 const service = {
   whoami: vi.fn(async () => ({ displayName: "Jamie Q. Traveler", isPro: true })),
   listTrips: vi.fn(async () => [{ id: "1", uuid: "u1", displayName: "Trip", isPrivate: false }]),
-  getTrip: vi.fn(async () => ({ trip: { id: "1", uuid: "u1" }, flights: [], lodgings: [], cars: [], activities: [] })),
+  getTrip: vi.fn(async () => ({
+    trip: { id: "1", uuid: "u1" },
+    flights: [],
+    lodgings: [],
+    cars: [],
+    activities: [],
+  })),
   listAlerts: vi.fn(async () => [{ id: "a1", isNew: true }]),
 } as any;
 
@@ -33,7 +39,10 @@ describe("registerReadTools", () => {
     registerReadTools(server as any, { service });
     const out = await server.handlers.tripit_whoami({});
     expect(out.content[0].type).toBe("text");
-    expect(JSON.parse(out.content[0].text)).toEqual({ displayName: "Jamie Q. Traveler", isPro: true });
+    expect(JSON.parse(out.content[0].text)).toEqual({
+      displayName: "Jamie Q. Traveler",
+      isPro: true,
+    });
   });
 
   it("tripit_list_trips forwards past/limit to the service", async () => {
@@ -58,9 +67,16 @@ describe("registerReadTools", () => {
   });
 
   it("propagates SessionExpiredError out of a tool handler instead of swallowing it", async () => {
-    const failingService = { ...service, listTrips: vi.fn(async () => { throw new SessionExpiredError(); }) };
+    const failingService = {
+      ...service,
+      listTrips: vi.fn(async () => {
+        throw new SessionExpiredError();
+      }),
+    };
     const server = fakeServer();
     registerReadTools(server as any, { service: failingService });
-    await expect(server.handlers.tripit_list_trips({})).rejects.toThrow(/run `tripit-mcp login` again/i);
+    await expect(server.handlers.tripit_list_trips({})).rejects.toThrow(
+      /run `tripit-mcp login` again/i,
+    );
   });
 });

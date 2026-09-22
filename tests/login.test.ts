@@ -1,8 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { login } from "../src/auth/login.js";
 
-const LOGIN_PAGE_HTML =
-  '<form><input type="hidden" name="csrf_token" value="TOKEN123" /></form>';
+const LOGIN_PAGE_HTML = '<form><input type="hidden" name="csrf_token" value="TOKEN123" /></form>';
 
 function res(status: number, body: string, headers: Record<string, string[]> = {}) {
   return {
@@ -67,7 +66,8 @@ describe("login()", () => {
 
   it("throws a clear error when the POST redirects back to the login page", async () => {
     const fetchImpl = vi.fn(async (url: string, init: any) => {
-      if (init.method !== "POST" && !url.includes("account/login")) return res(200, LOGIN_PAGE_HTML);
+      if (init.method !== "POST" && !url.includes("account/login"))
+        return res(200, LOGIN_PAGE_HTML);
       if (init.method === undefined || init.method === "GET") return res(200, LOGIN_PAGE_HTML);
       return res(302, "", { location: ["https://www.tripit.com/account/login?errors=1"] });
     });

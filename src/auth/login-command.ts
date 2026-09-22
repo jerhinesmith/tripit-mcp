@@ -42,7 +42,7 @@ export function makeMutedWriter(out: NodeJS.WritableStream): {
 } {
   let muted = false;
   const stream = new Writable({
-    write(chunk, encoding, cb) {
+    write(chunk, _encoding, cb) {
       if (!muted) {
         const str = typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8");
         out.write(str);

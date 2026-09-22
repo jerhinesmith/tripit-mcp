@@ -37,7 +37,10 @@ describe("TripitHttpClient.getJson", () => {
   it("throws SessionExpiredError on a redirect response, and still merges any Set-Cookie", async () => {
     const jar = new CookieJar({ a: "1" });
     const fetchImpl = vi.fn(async () =>
-      res(302, "", { location: ["https://www.tripit.com/account/login"], "set-cookie": ["b=2; Path=/"] }),
+      res(302, "", {
+        location: ["https://www.tripit.com/account/login"],
+        "set-cookie": ["b=2; Path=/"],
+      }),
     );
     const client = new TripitHttpClient({ jar, fetchImpl: fetchImpl as any });
     await expect(client.getJson("/x")).rejects.toBeInstanceOf(SessionExpiredError);
