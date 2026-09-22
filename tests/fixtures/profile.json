@@ -1,0 +1,16 @@
+{
+  "Profile": {
+    "screen_name": "sample_user",
+    "public_display_name": "Jamie Q. Traveler",
+    "home_city": "Walnut Creek, CA",
+    "home_airport": "San Francisco International Airport (SFO)",
+    "is_pro": "true",
+    "ical_url": "https://www.tripit.com/feed/ical/private/FAKE0000FAKE0000FAKE0000FAKE00/tripit.ics",
+    "ProfileEmailAddresses": {
+      "ProfileEmailAddress": [
+        { "address": "jamie.work@example.com", "is_primary": "false" },
+        { "address": "jamie@example.com", "is_primary": "true" }
+      ]
+    }
+  }
+}
