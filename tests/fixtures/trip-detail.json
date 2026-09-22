@@ -1,0 +1,157 @@
+{
+  "Trip": {
+    "id": "111111111",
+    "uuid": "aaaaaaaa-0000-9000-0001-000000000001",
+    "display_name": "Barcelona, Spain, October 2026",
+    "start_date": "2026-10-08",
+    "end_date": "2026-10-23",
+    "primary_location": "Barcelona, Spain",
+    "PrimaryLocationAddress": {
+      "address": "Barcelona, Spain",
+      "city": "Barcelona",
+      "state": "Catalonia",
+      "country": "ES",
+      "latitude": "41.388790",
+      "longitude": "2.158990"
+    },
+    "TripStatuses": { "TripStatus": { "status": "all_clear" } },
+    "is_private": "false"
+  },
+  "AirObject": [
+    {
+      "id": "222222222",
+      "uuid": "bbbbbbbb-0000-9000-0004-000000000001",
+      "display_name": "Flight",
+      "booking_site_name": "United Airlines",
+      "supplier_conf_num": "FAKE01",
+      "total_cost": "3099.86 USD",
+      "Segment": [
+        {
+          "StartDateTime": {
+            "date": "2026-10-08",
+            "time": "17:30:00",
+            "timezone": "America/Los_Angeles",
+            "utc_offset": "-07:00"
+          },
+          "EndDateTime": {
+            "date": "2026-10-09",
+            "time": "13:55:00",
+            "timezone": "Europe/Madrid",
+            "utc_offset": "+02:00"
+          },
+          "start_airport_code": "SFO",
+          "start_airport_name": "San Francisco International Airport",
+          "start_city_name": "San Francisco",
+          "end_airport_code": "BCN",
+          "end_airport_name": "Barcelona-El Prat Airport",
+          "end_city_name": "Barcelona",
+          "marketing_airline": "United Airlines",
+          "marketing_airline_code": "UA",
+          "marketing_flight_number": "672",
+          "Status": { "flight_status": "300" }
+        }
+      ]
+    },
+    {
+      "id": "222222233",
+      "uuid": "bbbbbbbb-0000-9000-0004-000000000002",
+      "display_name": "Flight",
+      "booking_site_name": "Iberia",
+      "supplier_conf_num": "FAKE02",
+      "total_cost": "$428.35 USD",
+      "Segment": {
+        "StartDateTime": {
+          "date": "2026-10-20",
+          "time": "09:00:00",
+          "timezone": "Europe/Madrid",
+          "utc_offset": "+02:00"
+        },
+        "EndDateTime": {
+          "date": "2026-10-20",
+          "time": "10:15:00",
+          "timezone": "Europe/Madrid",
+          "utc_offset": "+02:00"
+        },
+        "start_airport_code": "SCQ",
+        "end_airport_code": "MAD",
+        "marketing_airline": "Iberia",
+        "marketing_airline_code": "IB",
+        "marketing_flight_number": "1234",
+        "Status": { "flight_status": "300" }
+      }
+    }
+  ],
+  "LodgingObject": [
+    {
+      "id": "333333333",
+      "uuid": "cccccccc-0000-9000-0004-000000000001",
+      "display_name": "Sample Hotel Barcelona",
+      "supplier_name": "Sample Hotel Barcelona",
+      "supplier_conf_num": "FAKE03",
+      "total_cost": "827.20 EUR",
+      "StartDateTime": {
+        "date": "2026-10-09",
+        "time": "15:00:00",
+        "timezone": "Europe/Madrid",
+        "utc_offset": "+02:00"
+      },
+      "EndDateTime": {
+        "date": "2026-10-11",
+        "time": "11:00:00",
+        "timezone": "Europe/Madrid",
+        "utc_offset": "+02:00"
+      },
+      "Address": {
+        "address": "Carrer Fake 1, 08013 Barcelona",
+        "city": "Barcelona",
+        "country": "ES",
+        "latitude": "41.400000",
+        "longitude": "2.180000"
+      }
+    }
+  ],
+  "CarObject": {
+    "id": "444444444",
+    "uuid": "dddddddd-0000-9000-0004-000000000001",
+    "display_name": "Sample Car Rental",
+    "supplier_name": "Sample Rentals",
+    "supplier_conf_num": "FAKE04",
+    "total_cost": "$428.35 USD",
+    "StartDateTime": {
+      "date": "2026-10-12",
+      "time": "09:00:00",
+      "timezone": "Europe/Madrid",
+      "utc_offset": "+02:00"
+    },
+    "EndDateTime": {
+      "date": "2026-10-20",
+      "time": "15:00:00",
+      "timezone": "Europe/Madrid",
+      "utc_offset": "+02:00"
+    },
+    "StartLocationAddress": { "city": "Bilbao", "country": "ES" },
+    "EndLocationAddress": { "city": "Santiago de Compostela", "country": "ES" }
+  },
+  "ActivityObject": [
+    {
+      "id": "555555555",
+      "uuid": "eeeeeeee-0000-9000-0004-000000000001",
+      "display_name": "Sample Landmark Tour",
+      "supplier_name": "Sample Landmark",
+      "booking_site_conf_num": "FAKE05",
+      "StartDateTime": {
+        "date": "2026-10-10",
+        "time": "09:15:00",
+        "timezone": "Europe/Madrid",
+        "utc_offset": "+02:00"
+      },
+      "EndDateTime": {
+        "date": "2026-10-10",
+        "time": "10:15:00",
+        "timezone": "Europe/Madrid",
+        "utc_offset": "+02:00"
+      },
+      "Address": { "city": "Barcelona", "country": "ES" }
+    }
+  ]
+}

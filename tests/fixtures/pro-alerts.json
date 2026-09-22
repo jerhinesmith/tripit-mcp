@@ -1,0 +1,10 @@
+{
+  "AccountPremiumAlert": {
+    "id": "666666666",
+    "trip_uuid": "aaaaaaaa-0000-9000-0001-000000000001",
+    "title": "Barcelona, Spain, October 2026",
+    "message": "Sample advisory message for this trip.",
+    "created_at": "1790097872",
+    "is_new": "true"
+  }
+}
