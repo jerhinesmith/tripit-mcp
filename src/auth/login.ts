@@ -1,4 +1,4 @@
-import { BASE_URL, BROWSER_HEADERS, LOGIN_PATH } from "../constants.js";
+import { BASE_URL, BROWSER_HEADERS, LOGIN_PATH, NAV_HEADERS } from "../constants.js";
 import type { FetchLike } from "../http/client.js";
 import { CookieJar } from "./cookie-jar.js";
 
@@ -41,7 +41,7 @@ export async function login(fetchImpl: FetchLike, creds: LoginCreds): Promise<Lo
   const loginPage = await fetchImpl(`${BASE_URL}${LOGIN_PATH}`, {
     method: "GET",
     redirect: "manual",
-    headers: { ...BROWSER_HEADERS, Accept: "text/html" },
+    headers: { ...NAV_HEADERS, Accept: "text/html" },
   });
   jar.applySetCookie(loginPage.headers.getSetCookie?.() ?? []);
   if (loginPage.status < 200 || loginPage.status >= 300) {
@@ -63,8 +63,10 @@ export async function login(fetchImpl: FetchLike, creds: LoginCreds): Promise<Lo
     method: "POST",
     redirect: "manual",
     headers: {
-      ...BROWSER_HEADERS,
+      ...NAV_HEADERS,
       "Content-Type": "application/x-www-form-urlencoded",
+      Origin: BASE_URL,
+      Referer: `${BASE_URL}${LOGIN_PATH}`,
       Cookie: jar.toHeader(),
     },
     body,
@@ -90,7 +92,7 @@ export async function login(fetchImpl: FetchLike, creds: LoginCreds): Promise<Lo
     nextInit = {
       method: "GET",
       redirect: "manual",
-      headers: { ...BROWSER_HEADERS, Cookie: jar.toHeader() },
+      headers: { ...NAV_HEADERS, Cookie: jar.toHeader() },
     };
   }
 

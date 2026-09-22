@@ -56,6 +56,15 @@ describe("login()", () => {
       login_password: "secret",
     });
 
+    // the POST is a form submission, not an XHR — it needs Origin/Referer
+    // and the full sec-ch-ua/sec-fetch-* bundle a real browser always sends
+    // alongside them, or the User-Agent alone reads as an inconsistent,
+    // bot-like fingerprint
+    expect(calls[1][1].headers.Origin).toBe("https://www.tripit.com");
+    expect(calls[1][1].headers.Referer).toBe("https://www.tripit.com/account/login");
+    expect(calls[1][1].headers["sec-ch-ua"]).toContain("Chrome");
+    expect(calls[1][1].headers["sec-fetch-mode"]).toBe("navigate");
+
     expect(jar.toHeader()).toContain("preauth=p1");
     expect(jar.toHeader()).toContain("session_id=s1");
     expect(jar.toHeader()).toContain("csrf_token_wa=c1");
