@@ -47,8 +47,8 @@ rotating the password since it briefly existed in a plaintext file.
 ## Scope
 
 **In scope (v1):**
-- Login via email + password, session persisted locally (cookie jar, not
-  the password).
+- Login via a real browser window (see "Auth flow"), session persisted
+  locally (cookie jar, not the password).
 - List trips (upcoming/past).
 - Get one trip's full itinerary: flights (with per-segment status/times),
   hotels, car rentals, activities.
@@ -63,18 +63,22 @@ rotating the password since it briefly existed in a plaintext file.
 - TripIt's official OAuth 1.0a public API — the private web API was the
   chosen path (see prior conversation); revisit only if the private API
   proves too unstable to maintain.
-- MFA/verification-code challenges during login — none was observed in the
-  capture. If TripIt prompts for one on a given login attempt, the login
-  command fails with a clear message rather than trying to handle it
-  blindly; can be added later if it turns out to be a real obstacle.
+- MFA/verification-code challenges during login — no longer a special case
+  to design for: login goes through a real browser window the user
+  completes themselves, so whatever TripIt asks for (MFA included) is
+  handled the same way it would be for any normal browser login.
 - Non-personal-account features (Concur linking, enterprise/pro admin
   settings) beyond reading their presence on the profile.
 
 ## Architecture
 
 TypeScript, Node ≥ 20, `@modelcontextprotocol/sdk` over stdio, `undici` for
-HTTP, `zod` for tool schemas — identical dependency set to `strong-mcp`.
-Same three-layer shape:
+HTTP, `zod` for tool schemas — identical dependency set to `strong-mcp`, plus
+one deliberate addition: `playwright-core`, used only by `tripit-mcp login`
+(see "Auth flow" below) to drive a real Chrome browser through TripIt's
+bot-protected login page. The MCP server itself (the stdio tool-serving
+process) never touches Playwright at runtime — it's confined to the login
+subcommand. Same three-layer shape otherwise:
 
 - **Auth/session layer** — owns the login flow and the persisted session.
 - **API client layer** — typed wrappers around the three TripIt endpoints,
@@ -90,38 +94,25 @@ conversation, but nothing is persisted to disk beyond the session itself.
 
 ## Auth flow
 
-`tripit-mcp login` (CLI command, run once interactively, same pattern as
-`strong-mcp login`):
-
-1. `GET https://www.tripit.com/account/login` — establishes a pre-auth
-   session cookie and (assumed, not directly observed) exposes a
-   `csrf_token` value, most likely as a hidden form field in the returned
-   HTML. Scrape it from there.
-2. `POST https://www.tripit.com/account/login`, form-encoded body:
-   `csrf_token`, `errors=`, `toc=1`, `redirect_url=home%2Findex`,
-   `login_email_address`, `login_password` — using the cookie jar from
-   step 1.
-3. Follow the redirect chain (`302 → /home`, `302 → /app/`) with the same
-   jar. Landing on `/app/` (200/304) with no further redirect to
-   `/account/login` means success.
-4. Persist the accumulated cookie jar to
-   `~/.tripit-mcp/session.json` (mode `600`). **The password is never
-   written to disk** — same posture as strong-mcp.
+`tripit-mcp login` (CLI command, run once interactively) launches a real,
+visible Chrome window (via Playwright's `channel: "chrome"`, driving the
+user's actual installed Chrome rather than a bundled Chromium) on
+`https://www.tripit.com/account/login` and waits for the user to log in
+there themselves — no credentials are typed into the terminal or handled by
+this program at all. Once the browser navigates to `/app/`, every cookie in
+that browser session is read via Playwright's `context.cookies()` and
+persisted to `~/.tripit-mcp/session.json` (mode `600`). See "Post-
+implementation correction" below for why this replaced an earlier
+raw-HTTP-POST design.
 
 **CSRF header on subsequent calls:** every observed API call (GET and
-POST alike) carries `x-csrf-token-wa`. No embedding of that value was found
-in the static `/app/` HTML shell, so the working assumption is TripIt uses
-a double-submit cookie: a non-HttpOnly cookie set alongside the session
-(name unconfirmed — something like `csrf_token_wa`) that the SPA's JS
-reads via `document.cookie` and mirrors into that header. Implementation
-should, after login, scan the jar for a plausible candidate cookie and
-mirror its value into `x-csrf-token-wa` on every request; **this is the one
-piece of the auth flow to verify empirically against the live API** (log
-what's in the jar on first real login, confirm which cookie matches the
-header TripIt expects, adjust the candidate-selection logic once known).
-If it turns out to be wrong, the symptom will be a 403 on API calls
-immediately after a successful-looking login, not a login failure itself —
-easy to distinguish while implementing.
+POST alike) carries `x-csrf-token-wa`, mirrored from a cookie in the jar.
+Confirmed live: TripIt sets two differently-named csrf-flavored cookies —
+`it_csrf` (guards the login form's own POST, irrelevant now that login goes
+through a real browser) and `it_wa_csrf` (the one that actually belongs in
+`x-csrf-token-wa`). The candidate-selection heuristic prefers a cookie name
+containing "wa" before falling back to the first generic csrf-looking
+cookie.
 
 **Session expiry:** if any API call's response is a redirect (or its body
 looks like the login page rather than JSON), the tool call fails with
@@ -204,25 +195,23 @@ confirmation numbers, and lat/longs in the source captures are replaced
 with fake-but-structurally-identical values before any fixture file is
 written to this repo. Normalization logic (string-bool/number coercion,
 `@attributes` flattening, `Segment` array normalization, date combining,
-cost parsing) gets unit tests against those fixtures. The login flow's
-CSRF-cookie-mirroring assumption gets an integration-style smoke test that
-can only run manually against a live account (documented in the README,
-not part of CI), same as how strong-mcp's inferred write shapes verify
-themselves live.
+cost parsing) gets unit tests against those fixtures. `loginWithBrowser`
+(the Playwright orchestration) isn't unit-testable — no real browser in
+CI, same category as the TTY-prompting code it replaced — and instead gets
+verified by actually running `tripit-mcp login`; only its pure
+cookie-array-to-jar conversion step has a unit test.
 
-## Open items to verify during implementation
+## Open items — resolved during implementation
 
-1. Which cookie (if any) mirrors into `x-csrf-token-wa` — confirm against
-   a live login, adjust candidate-selection if the first guess is wrong.
-2. Exact HTML location of the `csrf_token` hidden field on
-   `GET /account/login` — confirm by fetching it directly once
-   implementing, rather than guessing the selector now.
-3. Whether `toc=1` is only required on first-ever login (terms-of-service
-   acceptance) or must be sent every time — send it every time unless it
-   turns out to cause a problem, since it was present in the one login we
-   observed.
+1. ~~Which cookie mirrors into `x-csrf-token-wa`~~ — resolved: `it_wa_csrf`,
+   confirmed against a live unauthenticated page load. See "Post-
+   implementation correction."
+2. ~~Exact HTML location of the `csrf_token` hidden field~~ — moot: no
+   longer scraped, login goes through a real browser.
+3. ~~Whether `toc=1` is required on every login~~ — moot: no longer
+   submitted by this program at all.
 
-## Post-implementation correction
+## Post-implementation correction: pro-alert field never existed
 
 TripIt's real `list/trip` API response (as captured during implementation)
 has no per-trip pro-alert flag, so the `tripit_list_trips` output described
@@ -231,3 +220,49 @@ come from the separate `listProAlerts` endpoint and are correlated to a trip
 only by `trip_uuid`; correlating a trip to its alerts requires a
 client-side join between `tripit_list_trips` and `tripit_list_alerts` on
 `uuid`/`tripUuid`.
+
+## Post-implementation correction: login flow replaced with a real browser
+
+The originally-shipped raw-HTTP login (GET login page → scrape `csrf_token`
+→ POST credentials → follow the redirect chain by hand) was tried against
+a real account and failed identically — `check your email and password` —
+across three escalating attempts, even though the same credentials worked
+immediately in an actual browser:
+
+1. Baseline: no `User-Agent` at all on any request.
+2. Added a real Chrome `User-Agent` + `Accept-Language`.
+3. Added the full client-hint/fetch-metadata bundle a real Chrome sends
+   alongside them (`sec-ch-ua*`, `sec-fetch-*`, `upgrade-insecure-requests`,
+   `Origin`, `Referer`) — copied exactly from the original HAR capture.
+
+None of these changed the outcome at all — same error, not even a
+different failure mode. An unauthenticated diagnostic request to the login
+page (no credentials needed) explained why: TripIt's login sits behind
+**Akamai Bot Manager** (`_abck`/`bm_sz` cookies set on that response). Bot
+Manager's real defense is a JS-executed sensor script that validates the
+`_abck` cookie using signals (mouse movement, timing entropy, canvas
+fingerprinting) that only exist inside an actual browser — no static header
+set, however accurate, can fake having run that script. Confirmed the
+credentials themselves were never the issue (same password worked instantly
+in a real browser at every point during this debugging).
+
+That same diagnostic request also resolved Open Item 1 from the original
+design: TripIt sets two differently-scoped cookies whose names contain
+"csrf" — `it_csrf` (guards the login form's own POST) and `it_wa_csrf` (the
+one that mirrors into `x-csrf-token-wa`). The original `/csrf/i`-only
+candidate heuristic would always have picked `it_csrf`, since `Map`
+preserves original insertion order even after a later value update on the
+same key — fixed to prefer a "wa"-containing name first.
+
+**Resolution:** replaced the raw-HTTP login with `playwright-core` driving
+a real, visible Chrome window (the user's own installed Chrome via
+`channel: "chrome"`, not a bundled Chromium) through the actual login page.
+The user completes login exactly as they normally would; the program reads
+the resulting cookies out of that real browser session via
+`context.cookies()` once it navigates to `/app/`, and persists them through
+the same `CookieJar`/`SessionStore` infrastructure as before. Nothing
+downstream of login (the HTTP client, normalization, service layer, MCP
+tools) changed. This is a deliberate, documented exception to the
+dependency-minimalism stated elsewhere in this spec, scoped to the `login`
+subcommand only — the MCP server's stdio tool-serving process never
+touches Playwright at runtime.
