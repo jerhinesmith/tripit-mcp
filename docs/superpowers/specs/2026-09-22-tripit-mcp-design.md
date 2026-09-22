@@ -175,7 +175,7 @@ All read-only, no confirmation prompts needed (nothing mutates).
 | Tool | Input | Output |
 | --- | --- | --- |
 | `tripit_whoami` | none | Name, primary email, home city/airport, pro status, ical feed URL. |
-| `tripit_list_trips` | `past?: boolean`, `limit?: number` | Trip id/uuid, display name, dates, primary location, status (e.g. `all_clear`), whether it has an open pro alert. |
+| `tripit_list_trips` | `past?: boolean`, `limit?: number` | Trip id/uuid, display name, dates, primary location, status (e.g. `all_clear`). |
 | `tripit_get_trip` | `uuid: string` | Full itinerary: trip summary + normalized flights (with segments), hotels, cars, activities, sorted chronologically. |
 | `tripit_list_alerts` | none | Any active pro alerts (id, trip reference, message, created time). |
 
@@ -221,3 +221,13 @@ themselves live.
    acceptance) or must be sent every time — send it every time unless it
    turns out to cause a problem, since it was present in the one login we
    observed.
+
+## Post-implementation correction
+
+TripIt's real `list/trip` API response (as captured during implementation)
+has no per-trip pro-alert flag, so the `tripit_list_trips` output described
+above no longer claims one (an earlier draft of this table did). Pro alerts
+come from the separate `listProAlerts` endpoint and are correlated to a trip
+only by `trip_uuid`; correlating a trip to its alerts requires a
+client-side join between `tripit_list_trips` and `tripit_list_alerts` on
+`uuid`/`tripUuid`.

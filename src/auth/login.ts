@@ -75,13 +75,52 @@ export async function login(fetchImpl: FetchLike, creds: LoginCreds): Promise<Lo
 
     const loc = r.headers.get("location");
     if (!loc) break;
+    const resolved = new URL(loc, BASE_URL);
+    if (resolved.origin !== new URL(BASE_URL).origin) {
+      throw new Error(
+        `Login failed: refused to follow a redirect to a different origin (${resolved.origin}).`,
+      );
+    }
     lastLocation = loc;
-    nextUrl = loc.startsWith("http") ? loc : `${BASE_URL}${loc}`;
+    nextUrl = resolved.toString();
     nextInit = { method: "GET", redirect: "manual", headers: { Cookie: jar.toHeader() } };
   }
 
   if (/\/account\/login/.test(lastLocation)) {
     throw new Error("Login failed: check your email and password.");
+  }
+
+  // Verify the session actually works: a redirect chain that lands somewhere
+  // other than /account/login (an MFA/verification interstitial, say) is not
+  // proof of success. A real API call is the only way to know, and this
+  // doubles as the live smoke test for the CSRF-cookie-mirroring assumption
+  // (see the design spec's "Open items").
+  const csrf = jar.csrfCandidate();
+  const verify = await fetchImpl(`${BASE_URL}/api/v2/get/profile`, {
+    method: "GET",
+    redirect: "manual",
+    headers: {
+      Accept: "application/json",
+      Cookie: jar.toHeader(),
+      ...(csrf ? { "x-csrf-token-wa": csrf } : {}),
+    },
+  });
+  jar.applySetCookie(verify.headers.getSetCookie?.() ?? []);
+  const verifyBody = await verify.text();
+  let verifyOk = verify.status >= 200 && verify.status < 300;
+  if (verifyOk) {
+    try {
+      JSON.parse(verifyBody);
+    } catch {
+      verifyOk = false;
+    }
+  }
+  if (!verifyOk) {
+    throw new Error(
+      "Login redirected away from the login page but the session was rejected. " +
+        "TripIt may have prompted for a verification code, or its CSRF cookie " +
+        "name may have changed.",
+    );
   }
 
   return { jar };

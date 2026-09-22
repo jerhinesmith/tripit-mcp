@@ -34,10 +34,12 @@ describe("buildServer", () => {
     await expect(buildServer(config, vi.fn() as any)).rejects.toThrow(/tripit-mcp login/);
   });
 
-  it("bootstraps from cookieSeed when no session file exists yet", async () => {
+  it("bootstraps from cookieSeed when no session file exists yet, and persists it to session.json", async () => {
     const dataDir = mkdtempSync(join(tmpdir(), "server-test-"));
     const config: Config = { dataDir, cookieSeed: "session_id=seeded" };
     const { server } = await buildServer(config, vi.fn() as any);
     expect(server).toBeDefined();
+    const persisted = await new SessionStore(dataDir).read();
+    expect(persisted?.toHeader()).toBe("session_id=seeded");
   });
 });

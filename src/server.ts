@@ -9,7 +9,11 @@ import { registerReadTools } from "./tools/read-tools.js";
 async function resolveJar(store: SessionStore, config: Config): Promise<CookieJar> {
   const stored = await store.read();
   if (stored) return stored;
-  if (config.cookieSeed) return CookieJar.fromCookieHeaderString(config.cookieSeed);
+  if (config.cookieSeed) {
+    const jar = CookieJar.fromCookieHeaderString(config.cookieSeed);
+    await store.write(jar);
+    return jar;
+  }
   throw new Error(
     "No TripIt session found. Run `tripit-mcp login` to sign in, or set TRIPIT_SESSION_COOKIE.",
   );

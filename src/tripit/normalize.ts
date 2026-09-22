@@ -58,8 +58,8 @@ export function normalizeAddress(raw?: RawAddress): Address | undefined {
     state: raw.state,
     zip: raw.zip,
     country: raw.country,
-    latitude: raw.latitude !== undefined ? Number(raw.latitude) : undefined,
-    longitude: raw.longitude !== undefined ? Number(raw.longitude) : undefined,
+    latitude: raw.latitude ? Number(raw.latitude) : undefined,
+    longitude: raw.longitude ? Number(raw.longitude) : undefined,
   };
 }
 
@@ -78,6 +78,11 @@ export function normalizeProfile(raw: RawProfile): Profile {
 }
 
 export function normalizeTripSummary(raw: RawTrip): TripSummary {
+  if (!raw?.id || !raw?.uuid) {
+    throw new Error(
+      "TripIt returned an unrecognized Trip shape (missing id/uuid) — the private API may have changed.",
+    );
+  }
   return {
     id: raw.id,
     uuid: raw.uuid,
@@ -111,6 +116,11 @@ function normalizeSegment(raw: RawSegment): FlightSegment {
 }
 
 export function normalizeFlight(raw: RawAirObject): Flight {
+  if (!raw?.id || !raw?.uuid) {
+    throw new Error(
+      "TripIt returned an unrecognized AirObject shape (missing id/uuid) — the private API may have changed.",
+    );
+  }
   return {
     id: raw.id,
     uuid: raw.uuid,
@@ -123,6 +133,11 @@ export function normalizeFlight(raw: RawAirObject): Flight {
 }
 
 export function normalizeLodging(raw: RawLodgingObject): Lodging {
+  if (!raw?.id || !raw?.uuid) {
+    throw new Error(
+      "TripIt returned an unrecognized LodgingObject shape (missing id/uuid) — the private API may have changed.",
+    );
+  }
   return {
     id: raw.id,
     uuid: raw.uuid,
@@ -137,6 +152,11 @@ export function normalizeLodging(raw: RawLodgingObject): Lodging {
 }
 
 export function normalizeCar(raw: RawCarObject): CarRental {
+  if (!raw?.id || !raw?.uuid) {
+    throw new Error(
+      "TripIt returned an unrecognized CarObject shape (missing id/uuid) — the private API may have changed.",
+    );
+  }
   return {
     id: raw.id,
     uuid: raw.uuid,
@@ -152,6 +172,11 @@ export function normalizeCar(raw: RawCarObject): CarRental {
 }
 
 export function normalizeActivity(raw: RawActivityObject): Activity {
+  if (!raw?.id || !raw?.uuid) {
+    throw new Error(
+      "TripIt returned an unrecognized ActivityObject shape (missing id/uuid) — the private API may have changed.",
+    );
+  }
   return {
     id: raw.id,
     uuid: raw.uuid,

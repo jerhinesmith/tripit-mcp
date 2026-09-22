@@ -51,4 +51,14 @@ describe("endpoints", () => {
     await listProAlertsRaw(http);
     expect(http.getJson).toHaveBeenCalledWith("/api/v2/listProAlerts");
   });
+
+  it("getProfileRaw throws when the response has no Profile field", async () => {
+    const http = fakeHttp({});
+    await expect(getProfileRaw(http)).rejects.toThrow(/missing the Profile field/);
+  });
+
+  it("getTripRaw throws when the response has no Trip field", async () => {
+    const http = fakeHttp({});
+    await expect(getTripRaw(http, "u1")).rejects.toThrow(/missing the Trip field/);
+  });
 });

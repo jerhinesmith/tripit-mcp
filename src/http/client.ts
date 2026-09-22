@@ -30,7 +30,7 @@ export class TripitHttpClient {
   }
 
   async getJson<T>(path: string): Promise<T> {
-    const url = path.startsWith("http") ? path : `${BASE_URL}${path}`;
+    const url = `${BASE_URL}${path}`;
     const csrf = this.opts.jar.csrfCandidate();
     const init: any = {
       method: "GET",

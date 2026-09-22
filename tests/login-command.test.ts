@@ -39,7 +39,9 @@ describe("runLogin", () => {
           "set-cookie": ["session_id=s1; Path=/"],
         });
       }
-      return res(200, "<html>app</html>");
+      if (call === 3) return res(200, "<html>app</html>");
+      // call 4: the post-login profile-verification GET
+      return res(200, JSON.stringify({ Profile: { screen_name: "u" } }));
     });
     const prompts = fakePrompts({ email: "me@example.com", password: "secret" });
 

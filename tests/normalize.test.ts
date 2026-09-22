@@ -125,6 +125,15 @@ describe("domain normalizers against the sanitized trip-detail fixture", () => {
   });
 });
 
+describe("normalizers fail loudly on unrecognized shapes", () => {
+  it("normalizeTripSummary throws when id/uuid are missing", () => {
+    expect(() => normalizeTripSummary({} as any)).toThrow(/unrecognized Trip shape/);
+  });
+  it("normalizeFlight throws when id/uuid are missing", () => {
+    expect(() => normalizeFlight({} as any)).toThrow(/unrecognized AirObject shape/);
+  });
+});
+
 describe("normalizeProAlert", () => {
   it("maps fields and coerces isNew", () => {
     const raw = fixture<RawProAlertsResponse>("pro-alerts.json").AccountPremiumAlert;

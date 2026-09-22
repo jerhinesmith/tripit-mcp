@@ -34,7 +34,11 @@ describe("login()", () => {
           "set-cookie": ["csrf_token_wa=c1; Path=/"],
         });
       }
-      return res(200, "<html>app shell</html>");
+      if (calls.length === 4) {
+        return res(200, "<html>app shell</html>");
+      }
+      // call 5: the post-login profile-verification GET
+      return res(200, JSON.stringify({ Profile: { screen_name: "u" } }));
     });
 
     const { jar } = await login(fetchImpl as any, { email: "me@example.com", password: "secret" });
@@ -84,5 +88,36 @@ describe("login()", () => {
     await expect(
       login(fetchImpl as any, { email: "me@example.com", password: "wrong" }),
     ).rejects.toThrow(/check your email and password/i);
+  });
+
+  it("throws a clear error when the redirect lands somewhere other than /account/login but the session doesn't actually work (e.g. an MFA interstitial)", async () => {
+    const fetchImpl = vi.fn(async (url: string, init: any) => {
+      if (init.method === undefined || init.method === "GET") {
+        if (url === "https://www.tripit.com/account/login") return res(200, LOGIN_PAGE_HTML);
+        // both the interstitial landing page and the verification call return
+        // the same non-JSON HTML, since neither is a real profile response
+        return res(200, "<html>enter your verification code</html>");
+      }
+      // POST credentials
+      return res(302, "", { location: ["https://www.tripit.com/account/verify"] });
+    });
+    await expect(
+      login(fetchImpl as any, { email: "me@example.com", password: "secret" }),
+    ).rejects.toThrow(/session was rejected/i);
+  });
+
+  it("refuses to follow a redirect to a different origin", async () => {
+    const fetchImpl = vi.fn(async (url: string, init: any) => {
+      if (init.method === "GET" && url === "https://www.tripit.com/account/login") {
+        return res(200, LOGIN_PAGE_HTML);
+      }
+      if (init.method === "POST") {
+        return res(302, "", { location: ["https://evil.example/steal"] });
+      }
+      throw new Error("should not be reached");
+    });
+    await expect(
+      login(fetchImpl as any, { email: "me@example.com", password: "secret" }),
+    ).rejects.toThrow(/different origin/i);
   });
 });
