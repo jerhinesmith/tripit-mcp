@@ -1,17 +1,13 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { fetch } from "undici";
-import { makeTtyPrompts, runLogin } from "./auth/login-command.js";
+import { runLogin } from "./auth/login-command.js";
 import { loadConfig } from "./config.js";
 import type { FetchLike } from "./http/client.js";
 import { buildServer } from "./server.js";
 
 async function runLoginCommand() {
   const config = loadConfig(process.env);
-  await runLogin({
-    fetchImpl: fetch as unknown as FetchLike,
-    dataDir: config.dataDir,
-    prompts: makeTtyPrompts(),
-  });
+  await runLogin({ dataDir: config.dataDir });
 }
 
 async function runServer() {
@@ -24,7 +20,7 @@ async function runServer() {
 async function main() {
   if (process.argv[2] === "login") {
     await runLoginCommand();
-    process.exit(0); // the TTY readline keeps stdin ref'd; exit explicitly
+    process.exit(0); // belt-and-suspenders: nothing should keep the event loop alive here
   }
   await runServer();
 }
