@@ -1,4 +1,4 @@
-import { BASE_URL, LOGIN_PATH } from "../constants.js";
+import { BASE_URL, BROWSER_HEADERS, LOGIN_PATH } from "../constants.js";
 import type { FetchLike } from "../http/client.js";
 import { CookieJar } from "./cookie-jar.js";
 
@@ -41,7 +41,7 @@ export async function login(fetchImpl: FetchLike, creds: LoginCreds): Promise<Lo
   const loginPage = await fetchImpl(`${BASE_URL}${LOGIN_PATH}`, {
     method: "GET",
     redirect: "manual",
-    headers: { Accept: "text/html" },
+    headers: { ...BROWSER_HEADERS, Accept: "text/html" },
   });
   jar.applySetCookie(loginPage.headers.getSetCookie?.() ?? []);
   if (loginPage.status < 200 || loginPage.status >= 300) {
@@ -62,7 +62,11 @@ export async function login(fetchImpl: FetchLike, creds: LoginCreds): Promise<Lo
   let nextInit: any = {
     method: "POST",
     redirect: "manual",
-    headers: { "Content-Type": "application/x-www-form-urlencoded", Cookie: jar.toHeader() },
+    headers: {
+      ...BROWSER_HEADERS,
+      "Content-Type": "application/x-www-form-urlencoded",
+      Cookie: jar.toHeader(),
+    },
     body,
   };
   let lastLocation = LOGIN_PATH; // stays LOGIN_PATH unless we actually get redirected away
@@ -83,7 +87,11 @@ export async function login(fetchImpl: FetchLike, creds: LoginCreds): Promise<Lo
     }
     lastLocation = loc;
     nextUrl = resolved.toString();
-    nextInit = { method: "GET", redirect: "manual", headers: { Cookie: jar.toHeader() } };
+    nextInit = {
+      method: "GET",
+      redirect: "manual",
+      headers: { ...BROWSER_HEADERS, Cookie: jar.toHeader() },
+    };
   }
 
   if (/\/account\/login/.test(lastLocation)) {
@@ -100,6 +108,7 @@ export async function login(fetchImpl: FetchLike, creds: LoginCreds): Promise<Lo
     method: "GET",
     redirect: "manual",
     headers: {
+      ...BROWSER_HEADERS,
       Accept: "application/json",
       Cookie: jar.toHeader(),
       ...(csrf ? { "x-csrf-token-wa": csrf } : {}),

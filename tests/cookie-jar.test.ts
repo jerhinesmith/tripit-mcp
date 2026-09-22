@@ -27,6 +27,19 @@ describe("CookieJar", () => {
     expect(jar.csrfCandidate()).toBeUndefined();
   });
 
+  it("csrfCandidate prefers a web-app-scoped csrf cookie over a generic one, even when the generic one was set first", () => {
+    // Confirmed live 2026-09-22: TripIt sets both `it_csrf` (guards the login
+    // form's own POST) and `it_wa_csrf` (mirrors into the x-csrf-token-wa API
+    // header) on the same response, `it_csrf` first. A plain /csrf/i scan
+    // would always resolve to `it_csrf` — Map preserves insertion order even
+    // after a later `.set()` on the same key — which is the wrong cookie for
+    // API calls.
+    const jar = new CookieJar();
+    jar.applySetCookie(["it_csrf=formtoken; Path=/", "it_wa_csrf=deleted; Path=/"]);
+    jar.applySetCookie(["it_wa_csrf=apitoken; Path=/"]); // refreshed after login
+    expect(jar.csrfCandidate()).toBe("apitoken");
+  });
+
   it("isEmpty reflects whether any cookies have been set", () => {
     const jar = new CookieJar();
     expect(jar.isEmpty()).toBe(true);
