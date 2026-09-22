@@ -32,10 +32,21 @@ export class CookieJar {
   }
 
   csrfCandidate(): string | undefined {
+    // TripIt uses (at least) two differently-scoped cookies whose names
+    // contain "csrf" — confirmed live 2026-09-22: `it_csrf` guards the login
+    // form's own POST, and `it_wa_csrf` is the one that mirrors into the web
+    // app's `x-csrf-token-wa` API header. Prefer a web-app-scoped name
+    // (contains "wa") before falling back to the first generic csrf-looking
+    // cookie, since a plain /csrf/i scan would always resolve to whichever
+    // csrf-named cookie was set first — Map preserves original insertion
+    // order even after a later `.set()` on the same key.
+    let genericFallback: string | undefined;
     for (const [name, value] of this.cookies) {
-      if (/csrf/i.test(name)) return value;
+      if (!/csrf/i.test(name)) continue;
+      if (/wa/i.test(name)) return value;
+      if (genericFallback === undefined) genericFallback = value;
     }
-    return undefined;
+    return genericFallback;
   }
 
   isEmpty(): boolean {

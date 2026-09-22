@@ -59,6 +59,13 @@ describe("login()", () => {
     expect(jar.toHeader()).toContain("preauth=p1");
     expect(jar.toHeader()).toContain("session_id=s1");
     expect(jar.toHeader()).toContain("csrf_token_wa=c1");
+
+    // every request should look like it came from a real browser, since
+    // TripIt's login endpoint sits behind Akamai Bot Manager
+    for (const [, init] of calls) {
+      expect(init.headers["User-Agent"]).toContain("Mozilla");
+      expect(init.headers["Accept-Language"]).toBe("en-US,en;q=0.9");
+    }
   });
 
   it("throws a clear error when the login page has no csrf_token field", async () => {
